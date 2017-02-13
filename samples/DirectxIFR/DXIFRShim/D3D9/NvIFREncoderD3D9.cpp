@@ -65,8 +65,8 @@ BOOL NvIFREncoderD3D9::SetupNvIFR()
 		return FALSE;
 	}
 
-	//pIFR = (INvIFRToHWEncoder_v1 *)NvIFRLib.create(pDevice, NVIFR_TO_HWENCODER); 
-	pIFR = (NvIFRToSys *)NvIFRLib.create(pDevice, NVIFR_TOSYS);
+	pIFR = (INvIFRToHWEncoder_v1 *)NvIFRLib.create(pDevice, NVIFR_TO_HWENCODER); 
+	//pIFR = (NvIFRToSys *)NvIFRLib.create(pDevice, NVIFR_TOSYS);
 
 	if(!pIFR) {
 		LOG_ERROR(logger, "failed to create NvIFRToH264HWEncoder");

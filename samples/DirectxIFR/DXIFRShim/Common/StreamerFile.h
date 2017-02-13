@@ -1,81 +1,44 @@
 #pragma once
 
 #include "Streamer.h"
-#include <vector>
 
 extern simplelogger::Logger *logger;
 
 class StreamerFile : public Streamer
 {
 public:
-	StreamerFile(AppParam *pAppParam, int width, int height)
+	StreamerFile(AppParam *pAppParam) : hOutFile(NULL)
 	{
-		// Open pipe to ffmpeg here
-
-		int row = 0;
-		int col = 0;
-        
-		for (int i = 0; i < pAppParam->numPlayers; ++i)
-		{
-			std::stringstream *StringStream = new std::stringstream();
-			*StringStream << "ffmpeg -y -f rawvideo -pix_fmt yuv420p -s " << width << "x" << height << \
-						     " -re -i - -filter:v crop=\"" << pAppParam->splitWidth << ":" << pAppParam->splitHeight << ":" << 0 + pAppParam->splitWidth*col << ":" << 0 + pAppParam->splitHeight*row << "\" " \
-							 "-listen 1 -c:v libx264 -threads 1 -preset ultrafast " \
-							 "-an -tune zerolatency -x264opts crf=2:vbv-maxrate=4000:vbv-bufsize=160:intra-refresh=1:slice-max-size=2000:keyint=30:ref=1 " \
-							 "-f mpegts http://172.26.186.80:" << 30000 + i << " 2> output" << i << ".txt";
-			//*StringStream << "ffmpeg -y -f rawvideo -pix_fmt rgb24 -s 1920x1080 -re -i - -c copy -listen 1 " \
-			//				 "-f h264 http://172.26.186.80:" << 30000 + i << " 2> output" << i << ".txt";
-        
-			//*StringStream << "ffmpeg -y -f rawvideo -pix_fmt rgb24 -s 1280x720 -re -i - output.h264 2> output" << i << ".txt";
-			PipeList.push_back(_popen(StringStream->str().c_str(), "wb"));
-        
-			++col;
-			if (col >= pAppParam->cols)
-			{
-				col = 0;
-				++row;
-			}
-		
-			if (PipeList[i] == NULL)
-			{
-				LOG_ERROR(logger, "Failed to create FFMPEG Pipe");
-			}
+		hOutFile = CreateFile(pAppParam && pAppParam->bHEVC ? "NvIFR.h265" : "NvIFR.h264",
+			GENERIC_WRITE, FILE_SHARE_READ,
+			NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+		if (hOutFile == INVALID_HANDLE_VALUE) {
+			LOG_ERROR(logger, "Failed to create file, e=" << GetLastError());
 		}
-		
-		
 	}
 	~StreamerFile()
 	{
-		for (int i = 0; i < PipeList.size(); ++i)
-		{
-			if (PipeList[i])
-			{
-				fclose(PipeList[i]);
-			}
+		if (hOutFile) {
+			CloseHandle(hOutFile);
 		}
 	}
-	BOOL Stream(BYTE *pData, int nBytes, int bufferIndex)
+	BOOL Stream(BYTE *pData, int nBytes, int index)
 	{
-		if (!PipeList[bufferIndex])
-		{
+		if (!hOutFile) {
 			return FALSE;
 		}
-		fwrite(pData, nBytes, 1, PipeList[bufferIndex]);
-
-		return TRUE;
-	}
-	BOOL IsReady() 
-	{
-		for (int i = 0; i < PipeList.size(); ++i)
-		{
-			if (PipeList[i] == NULL)
-			{
-				return FALSE;
-			}
+		DWORD dwWritten = 0;
+		WriteFile(hOutFile, pData, nBytes, &dwWritten, NULL);
+		if (dwWritten != nBytes) {
+			LOG_ERROR(logger, "Unsuccessful file writing: dwWritten=" << dwWritten << ", e=" << GetLastError());
 		}
 		return TRUE;
+	}
+	BOOL IsReady()
+	{
+		return hOutFile != NULL;
 	}
 
 private:
-	std::vector<FILE*> PipeList;
+	HANDLE hOutFile;
 };

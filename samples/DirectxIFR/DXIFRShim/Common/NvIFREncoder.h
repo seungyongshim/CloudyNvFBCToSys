@@ -29,8 +29,7 @@
 #include <d3d11.h>
 #include <windows.h>
 #include <NvIFR/NvIFR.h>
-#include <NvIFR/NvIFRToSys.h>
-#include <NvIFRLibrary.h>
+#include <NvIFR/nvIFRHWEnc.h>
 #include "Logger.h"
 #include "AppParam.h"
 #include "GridAdapter.h"
@@ -108,7 +107,8 @@ protected:
 	HWND hwndEncoder;
 	BOOL bStopEncoder;
 
-	NvIFRToSys *pIFR;
+	//NvIFRToSys *pIFR;
+	INvIFRToHWEncoder_v1 *pIFR;
 	HANDLE hSharedTexture;
 	BOOL bKeyedMutex;
 
@@ -188,7 +188,6 @@ private:
 	const void *pPresenter;
 
 	int indexToUse;
-	
 	std::vector<FILE*> PipeList;
 	HANDLE FFMPEGThread;
 

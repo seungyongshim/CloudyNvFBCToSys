@@ -7,9 +7,9 @@ extern simplelogger::Logger *logger;
 class StreamerFile : public Streamer
 {
 public:
-	StreamerFile(AppParam *pAppParam) : hOutFile(NULL)
+	StreamerFile(/*AppParam *pAppParam*/) : hOutFile(NULL)
 	{
-		hOutFile = CreateFile(pAppParam && pAppParam->bHEVC ? "NvIFR.h265" : "NvIFR.h264",
+		hOutFile = CreateFile("NvIFR.h264",//pAppParam && pAppParam->bHEVC ? "NvIFR.h265" : "NvIFR.h264",
 			GENERIC_WRITE, FILE_SHARE_READ,
 			NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 		if (hOutFile == INVALID_HANDLE_VALUE) {
